@@ -322,9 +322,8 @@ void printNFA(NFA nfa)
 
 struct Edge			/*定义DFA的转换弧*/
 {
-	
-	char input;			/*弧上的值*/
-	int Trans;			/*弧所指向的状态号*/
+	char input;			/*弧上的值，也即输入什么转换到下一状态*/
+	int Trans;			/*弧所指向的下一状态的状态号*/
 };
 
 struct DfaState		/*定义DFA状态*/
@@ -335,8 +334,8 @@ struct DfaState		/*定义DFA状态*/
 	int index;			/*DFA状态的状态号*/
 	IntSet closure;		/*NFA的ε-move()闭包*/
 	
-	int edgeNum;		/*DFA状态上的射出弧数*/
-	Edge Edges[10];		/*DFA状态上的射出弧*/
+	int edgeNum;		/*DFA状态上射出弧的数目*/
+	Edge Edges[10];		/*DFA状态上的射出弧们*/
 };
 
 DfaState DfaStates[MAX];		/*DFA状态数组*/
@@ -354,22 +353,22 @@ struct DFA			/*定义DFA结构*/
 };
 
 /*求一个状态集的ε-cloure*/
-IntSet epcloure(IntSet s)
+IntSet theepcloure(IntSet s)
 {
 	
-	stack<int> epStack;		/*(此处栈和队列均可)*/
+	stack<int> theepStack;		/*栈和队列均可，此处使用栈*/
 	
 	IntSet::iterator it;
 	for(it = s.begin(); it != s.end(); it++)
 	{
-		epStack.push(*it);			/*将该状态集中的每一个元素都压入栈中*/
+		theepStack.push(*it);			/*将该状态集中的每一个元素都压入栈中*/
 	}
 	
-	while(!epStack.empty())			/*只要栈不为空*/
+	while(!theepStack.empty())			/*栈不为空时*/
 	{
 		
-		int temp = epStack.top();		/*从栈中弹出一个元素*/
-		epStack.pop();
+		int temp = theepStack.top();		/*从栈中弹出一个元素*/
+		theepStack.pop();
 		
 		IntSet::iterator iter;
 		for(iter = NfaStates[temp].epTrans.begin(); iter != NfaStates[temp].epTrans.end(); iter++)
@@ -377,7 +376,7 @@ IntSet epcloure(IntSet s)
 			if(!s.count(*iter))				/*遍历它通过ε能转换到的状态集*/
 			{								/*如果当前元素没有在集合中出现*/
 				s.insert(*iter);			/*则把它加入集合中*/
-				epStack.push(*iter);		/*同时压入栈中*/
+				theepStack.push(*iter);		/*同时压入栈中*/
 			}
 		}
 	}
@@ -386,7 +385,7 @@ IntSet epcloure(IntSet s)
 }
 
 /*求一个状态集s的ε-cloure(move(ch))*/
-IntSet moveEpCloure(IntSet s, char ch)
+IntSet movetheEpCloure(IntSet s, char ch)
 {
 	
 	IntSet temp;
@@ -400,7 +399,7 @@ IntSet moveEpCloure(IntSet s, char ch)
 		}
 	}
 	
-	temp = epcloure(temp);			/*最后求temp的ε闭包*/
+	temp = theepcloure(temp);			/*最后求temp的ε闭包*/
 	return temp;
 }
 
@@ -445,7 +444,7 @@ DFA nfaToDfa(NFA n, string str)		/*参数为nfa和后缀表达式*/
 	IntSet tempSet;
 	tempSet.insert(n.head->index);		/*将nfa的初态加入到集合中*/
 	
-	DfaStates[0].closure = epcloure(tempSet);		/*求dfa的初态*/
+	DfaStates[0].closure = theepcloure(tempSet);		/*求dfa的初态*/
 	DfaStates[0].isEnd = IsEnd(n, DfaStates[0].closure);		/*判断初态是否为终态*/
 	
 	dfaStateNum++;			/*dfa数量加一*/
@@ -456,21 +455,15 @@ DFA nfaToDfa(NFA n, string str)		/*参数为nfa和后缀表达式*/
 	while(!q.empty())		/*只要队列不为空，就一直循环*/
 	{
 		
-		int num = q.front();				/*出去队首元素*/
+		int num = q.front();				/*队首元素出队列*/
 		q.pop();
 		
 		CharSet::iterator it;
 		for(it = d.terminator.begin(); it != d.terminator.end(); it++)		/*遍历终结符集*/
 		{
 			
-			IntSet temp = moveEpCloure(DfaStates[num].closure, *it);		/*计算每个终结符的ε-cloure(move(ch))*/
-			/*IntSet::iterator t;
-			cout<<endl;
-			for(t = temp.begin(); t != temp.end(); t++)   打印每次划分 
-			{
-				cout<<*t<<' ';
-			}
-			cout<<endl;*/
+			IntSet temp = movetheEpCloure(DfaStates[num].closure, *it);		/*计算每个终结符的ε-cloure(move(ch))*/
+
 			if(!states.count(temp) && !temp.empty())	/*如果求出来的状态集不为空且与之前求出来的状态集不同，则新建一个DFA状态*/
 			{
 				
